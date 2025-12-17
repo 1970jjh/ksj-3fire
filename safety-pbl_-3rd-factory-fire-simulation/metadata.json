@@ -1,0 +1,5 @@
+{
+  "name": "Safety PBL: 3rd Factory Fire Simulation",
+  "description": "An interactive problem-based learning simulation for analyzing the 3rd Factory fire accident, identifying root causes, and proposing prevention strategies.",
+  "requestFramePermissions": []
+}
