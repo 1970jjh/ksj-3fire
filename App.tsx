@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Step, SimulationState, INITIAL_ANALYSIS, ViewMode, SessionConfig, UserProfile } from './types';
 import { Layout } from './components/Layout';
 import { Intro } from './components/Intro';
@@ -8,12 +8,23 @@ import { AnalysisWhy } from './components/AnalysisWhy';
 import { Solutions } from './components/Solutions';
 import { Report } from './components/Report';
 import { AdminDashboard } from './components/AdminDashboard';
-import { saveSession, subscribeToSession, DEFAULT_SESSION } from './firebase';
+import { saveSession, subscribeToSession, DEFAULT_SESSION, registerLearner, updateLearnerStep } from './firebase';
+
+// 고유 방문자 ID 생성 (브라우저별 고유 ID)
+const getVisitorId = (): string => {
+  let visitorId = localStorage.getItem('pbl-visitor-id');
+  if (!visitorId) {
+    visitorId = 'visitor_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('pbl-visitor-id', visitorId);
+  }
+  return visitorId;
+};
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('LEARNER');
   const [showInfoCard, setShowInfoCard] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const visitorId = useRef(getVisitorId());
 
   // Firebase에서 세션 상태 관리
   const [sessionConfig, setSessionConfig] = useState<SessionConfig>(DEFAULT_SESSION);
@@ -64,10 +75,22 @@ function App() {
 
   const navigateTo = (step: Step) => {
     updateState({ currentStep: step });
+    // Firebase에 진행 상태 업데이트
+    if (gameState.user) {
+      updateLearnerStep(visitorId.current, step);
+    }
   };
 
-  const handleUserJoin = (user: UserProfile) => {
+  const handleUserJoin = async (user: UserProfile) => {
     updateState({ user });
+    // Firebase에 학습자 등록
+    await registerLearner(
+      visitorId.current,
+      user.name,
+      user.teamId,
+      user.teamName,
+      Step.SITUATION
+    );
     navigateTo(Step.SITUATION);
   };
 
