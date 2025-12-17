@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Step, SimulationState, INITIAL_ANALYSIS, ViewMode, SessionConfig, UserProfile } from './types';
 import { Layout } from './components/Layout';
 import { Intro } from './components/Intro';
@@ -8,17 +8,38 @@ import { AnalysisWhy } from './components/AnalysisWhy';
 import { Solutions } from './components/Solutions';
 import { Report } from './components/Report';
 import { AdminDashboard } from './components/AdminDashboard';
+import { saveSession, subscribeToSession, DEFAULT_SESSION } from './firebase';
 
 function App() {
-  const [viewMode, setViewMode] = useState<ViewMode>('LEARNER'); // Default to Learner Mode
+  const [viewMode, setViewMode] = useState<ViewMode>('LEARNER');
   const [showInfoCard, setShowInfoCard] = useState(false);
-  
-  // Global Session Configuration (Shared state simulation)
-  const [sessionConfig, setSessionConfig] = useState<SessionConfig>({
-    groupName: '',
-    totalTeams: 6, // Default value
-    isSessionActive: false
-  });
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Firebase에서 세션 상태 관리
+  const [sessionConfig, setSessionConfig] = useState<SessionConfig>(DEFAULT_SESSION);
+
+  // Firebase 실시간 구독
+  useEffect(() => {
+    const unsubscribe = subscribeToSession((config) => {
+      setSessionConfig(config);
+      setIsLoading(false);
+    });
+
+    // 컴포넌트 언마운트 시 구독 해제
+    return () => unsubscribe();
+  }, []);
+
+  // 세션 변경 시 Firebase에 저장
+  const updateSessionConfig = async (newConfig: SessionConfig) => {
+    try {
+      await saveSession(newConfig);
+      // Firebase onSnapshot이 자동으로 상태를 업데이트함
+    } catch (error) {
+      console.error('세션 저장 실패:', error);
+      // 에러 시 로컬 상태만 업데이트
+      setSessionConfig(newConfig);
+    }
+  };
 
   const [gameState, setGameState] = useState<SimulationState>({
     currentStep: Step.INTRO,
@@ -60,24 +81,36 @@ function App() {
     }
   };
 
+  // 로딩 중 표시
+  if (isLoading) {
+    return (
+      <div className="min-h-screen h-screen bg-slate-900 flex items-center justify-center">
+        <div className="text-center text-white">
+          <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-slate-400">Firebase 연결 중...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Admin View
   if (viewMode === 'ADMIN') {
     return (
-      <AdminDashboard 
+      <AdminDashboard
         sessionConfig={sessionConfig}
-        setSessionConfig={setSessionConfig}
-        onExit={() => setViewMode('LEARNER')} 
+        setSessionConfig={updateSessionConfig}
+        onExit={() => setViewMode('LEARNER')}
         onSwitchToLearner={() => setViewMode('LEARNER')}
       />
     );
   }
 
-  // Learner View Navigation (Inside Phone Frame)
+  // Learner View Navigation
   const renderStep = () => {
     switch (gameState.currentStep) {
       case Step.INTRO:
         return (
-          <Intro 
+          <Intro
             sessionConfig={sessionConfig}
             onJoin={handleUserJoin}
             onAdminAccess={() => setViewMode('ADMIN')}
@@ -85,8 +118,8 @@ function App() {
         );
       case Step.SITUATION:
         return (
-          <Situation 
-            onNext={() => navigateTo(Step.PROBLEM_DEFINITION)} 
+          <Situation
+            onNext={() => navigateTo(Step.PROBLEM_DEFINITION)}
             onOpenInfoCard={() => setShowInfoCard(true)}
           />
         );
@@ -101,7 +134,7 @@ function App() {
         );
       case Step.ANALYSIS_WHY:
         return (
-          <AnalysisWhy 
+          <AnalysisWhy
             analysisFire={gameState.analysisFire}
             setAnalysisFire={(data) => updateState({ analysisFire: data })}
             analysisInjury={gameState.analysisInjury}
@@ -112,7 +145,7 @@ function App() {
         );
       case Step.SOLUTION:
         return (
-          <Solutions 
+          <Solutions
             solutions={gameState.solutions}
             setSolutions={(s) => updateState({ solutions: s })}
             onNext={() => navigateTo(Step.REPORT)}
@@ -121,7 +154,7 @@ function App() {
         );
       case Step.REPORT:
         return (
-          <Report 
+          <Report
             state={gameState}
             onBack={() => navigateTo(Step.SOLUTION)}
           />
