@@ -64,8 +64,8 @@ export const Layout: React.FC<LayoutProps> = ({
 
   return (
     <div className="flex flex-col h-full bg-slate-100 overflow-hidden relative">
-      {/* Mobile Header - Top padding adjusted for notch */}
-      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 z-30 sticky top-0 pt-8 pb-3 px-4 flex items-center justify-between">
+      {/* Header */}
+      <header className="bg-white/90 backdrop-blur-md border-b border-slate-200 z-30 sticky top-0 pt-3 pb-3 px-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 bg-gradient-to-br from-orange-500 to-red-600 rounded-xl flex items-center justify-center text-white font-bold text-xs shadow-lg shadow-orange-200">
             PBL

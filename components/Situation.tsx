@@ -8,10 +8,10 @@ interface SituationProps {
 
 export const Situation: React.FC<SituationProps> = ({ onNext, onOpenInfoCard }) => {
   return (
-    <div className="flex flex-col h-full font-['Noto_Sans_KR']">
-      
-      {/* Main Content Area - Centered */}
-      <div className="flex-1 flex flex-col justify-center items-center p-2 mb-36 animate-fade-in">
+    <div className="flex flex-col min-h-full font-['Noto_Sans_KR']">
+
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col items-center p-2 pt-4 animate-fade-in">
         
         {/* Large Headline */}
         <div className="text-center mb-10 w-full">
@@ -55,7 +55,7 @@ export const Situation: React.FC<SituationProps> = ({ onNext, onOpenInfoCard }) 
       </div>
 
       {/* Sticky Bottom Actions */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white p-4 pt-2 border-t border-slate-200 z-20 md:absolute md:rounded-b-3xl space-y-3">
+      <div className="fixed bottom-0 left-0 right-0 bg-white p-4 pt-3 border-t border-slate-200 z-20 space-y-3 max-w-2xl mx-auto">
         
         {/* Info Card Trigger Button (Large & Visual) */}
         <button 

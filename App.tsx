@@ -8,7 +8,6 @@ import { AnalysisWhy } from './components/AnalysisWhy';
 import { Solutions } from './components/Solutions';
 import { Report } from './components/Report';
 import { AdminDashboard } from './components/AdminDashboard';
-import { LayoutDashboard, Smartphone } from 'lucide-react';
 
 function App() {
   const [viewMode, setViewMode] = useState<ViewMode>('LEARNER'); // Default to Learner Mode
@@ -133,40 +132,19 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-800 flex items-center justify-center p-4 md:p-8 font-sans">
-      {/* Phone Frame Container */}
-      <div className="relative mx-auto border-gray-900 bg-gray-900 border-[14px] rounded-[2.5rem] h-[800px] w-[375px] shadow-2xl flex flex-col overflow-hidden ring-1 ring-white/10">
-        
-        {/* Notch / Status Bar Area */}
-        <div className="h-6 bg-slate-900 w-full absolute top-0 left-0 z-50 flex items-center justify-center pointer-events-none">
-          <div className="h-4 w-32 bg-black rounded-b-xl"></div>
-        </div>
-
-        {/* Screen Content */}
-        <div className="flex-1 bg-white rounded-[2rem] overflow-hidden h-full w-full">
-           <Layout 
-              currentStep={gameState.currentStep} 
-              onNavigate={navigateTo} 
-              user={gameState.user}
-              onExit={handleExit}
-              totalTeams={sessionConfig.totalTeams}
-              isInfoCardOpen={showInfoCard}
-              onOpenInfoCard={() => setShowInfoCard(true)}
-              onCloseInfoCard={() => setShowInfoCard(false)}
-            >
-              {renderStep()}
-            </Layout>
-        </div>
-
-        {/* Home Indicator (Optional visual) */}
-        <div className="absolute bottom-1 left-1/2 -translate-x-1/2 w-32 h-1 bg-gray-600 rounded-full z-50 pointer-events-none"></div>
-      </div>
-
-      {/* Helper text for desktop users */}
-      <div className="fixed bottom-4 text-slate-500 text-xs hidden md:block text-center">
-        Mobile Simulation Mode<br/>
-        {sessionConfig.isSessionActive ? `Current Session: ${sessionConfig.groupName}` : 'No Active Session'}
-      </div>
+    <div className="min-h-screen h-screen bg-slate-100 font-sans overflow-hidden">
+      <Layout
+        currentStep={gameState.currentStep}
+        onNavigate={navigateTo}
+        user={gameState.user}
+        onExit={handleExit}
+        totalTeams={sessionConfig.totalTeams}
+        isInfoCardOpen={showInfoCard}
+        onOpenInfoCard={() => setShowInfoCard(true)}
+        onCloseInfoCard={() => setShowInfoCard(false)}
+      >
+        {renderStep()}
+      </Layout>
     </div>
   );
 }
