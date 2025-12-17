@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Step, SimulationState, INITIAL_ANALYSIS, ViewMode, SessionConfig, UserProfile } from './types';
 import { Layout } from './components/Layout';
 import { Intro } from './components/Intro';
@@ -9,16 +9,74 @@ import { Solutions } from './components/Solutions';
 import { Report } from './components/Report';
 import { AdminDashboard } from './components/AdminDashboard';
 
-function App() {
-  const [viewMode, setViewMode] = useState<ViewMode>('LEARNER'); // Default to Learner Mode
-  const [showInfoCard, setShowInfoCard] = useState(false);
-  
-  // Global Session Configuration (Shared state simulation)
-  const [sessionConfig, setSessionConfig] = useState<SessionConfig>({
+const SESSION_STORAGE_KEY = 'pbl-session-config';
+
+// LocalStorage에서 세션 불러오기
+const loadSessionFromStorage = (): SessionConfig => {
+  try {
+    const saved = localStorage.getItem(SESSION_STORAGE_KEY);
+    if (saved) {
+      return JSON.parse(saved);
+    }
+  } catch (e) {
+    console.error('Failed to load session from storage:', e);
+  }
+  return {
     groupName: '',
-    totalTeams: 6, // Default value
+    totalTeams: 6,
     isSessionActive: false
-  });
+  };
+};
+
+// LocalStorage에 세션 저장
+const saveSessionToStorage = (config: SessionConfig) => {
+  try {
+    localStorage.setItem(SESSION_STORAGE_KEY, JSON.stringify(config));
+  } catch (e) {
+    console.error('Failed to save session to storage:', e);
+  }
+};
+
+function App() {
+  const [viewMode, setViewMode] = useState<ViewMode>('LEARNER');
+  const [showInfoCard, setShowInfoCard] = useState(false);
+
+  // LocalStorage에서 초기값 로드
+  const [sessionConfig, setSessionConfig] = useState<SessionConfig>(loadSessionFromStorage);
+
+  // 세션 변경 시 LocalStorage에 저장
+  const updateSessionConfig = (newConfig: SessionConfig) => {
+    setSessionConfig(newConfig);
+    saveSessionToStorage(newConfig);
+  };
+
+  // 다른 탭에서 세션이 변경되면 감지
+  useEffect(() => {
+    const handleStorageChange = (e: StorageEvent) => {
+      if (e.key === SESSION_STORAGE_KEY && e.newValue) {
+        try {
+          const newConfig = JSON.parse(e.newValue);
+          setSessionConfig(newConfig);
+        } catch (err) {
+          console.error('Failed to parse session config:', err);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // 주기적으로 LocalStorage 확인 (같은 탭 내 동기화용)
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const stored = loadSessionFromStorage();
+      if (JSON.stringify(stored) !== JSON.stringify(sessionConfig)) {
+        setSessionConfig(stored);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [sessionConfig]);
 
   const [gameState, setGameState] = useState<SimulationState>({
     currentStep: Step.INTRO,
@@ -63,10 +121,10 @@ function App() {
   // Admin View
   if (viewMode === 'ADMIN') {
     return (
-      <AdminDashboard 
+      <AdminDashboard
         sessionConfig={sessionConfig}
-        setSessionConfig={setSessionConfig}
-        onExit={() => setViewMode('LEARNER')} 
+        setSessionConfig={updateSessionConfig}
+        onExit={() => setViewMode('LEARNER')}
         onSwitchToLearner={() => setViewMode('LEARNER')}
       />
     );
